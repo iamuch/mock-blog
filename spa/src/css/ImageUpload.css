@@ -1,0 +1,19 @@
+input[type="file"] {
+    display: none;
+}
+.custom-file-upload {
+    position: relative;
+    width: 260px;
+    bottom: 70px
+}
+
+.img-preview {
+    background-color: #D6D6D6;
+    height: 540px;
+    width: 100%;
+}
+
+.img-preview img {
+    width: 100%;
+    height: 100%;
+}

@@ -1,15 +1,11 @@
 import React, { useState } from "react";
-import {
-    Link, useHistory,
-  } from "react-router-dom";
-
+import { Link, useHistory } from "react-router-dom";
 import moment from 'moment'
-
 import { useMutation } from '@apollo/client';
 import { ADD_POST } from "../graphql/Mutations";
-
 import '../css/ImageUpload.css';
 import { GET_POSTS } from "../graphql/Queries";
+import swal from 'sweetalert';
 
 export default function AddPost() {
     const history = useHistory();
@@ -68,6 +64,21 @@ export default function AddPost() {
             })
     }
 
+    const handleCancel = () => {
+        swal({
+            title: "Are you sure?",
+            icon: "warning",
+            buttons: { 
+                confirm: true, 
+                cancel: true,
+            }
+          }).then((res) => {
+              if (res) {
+                  history.push('/');
+              }
+          });
+    }
+
     let {imagePreviewUrl} = stateImg;
     let $imagePreview = null;
     if (imagePreviewUrl) {
@@ -84,7 +95,7 @@ export default function AddPost() {
             </section>
             <section className="flex flex-row flex-end mt-63 px-123">
                 <span className="f-20 fw-bold ml-50 underline cursor-pointer" onClick={handleSavePost}>Save Post</span>
-                <Link to="/"><span className="f-20 fw-bold ml-50 underline">Cancel</span></Link>
+                <span className="f-20 fw-bold ml-50 underline" onClick={handleCancel}>Cancel</span>
             </section>
             <section className="mt-33 px-123">
                 <div className="flex flex-column news-info">

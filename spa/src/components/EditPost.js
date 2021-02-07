@@ -1,7 +1,4 @@
-import {
-    Link, useHistory,
-  } from "react-router-dom";
-
+import { Link, useHistory } from "react-router-dom";
 import Comment from './Comment';
 import { useEffect, useState } from "react";
 import Button from "./Button";
@@ -9,6 +6,7 @@ import moment from 'moment';
 import { useLazyQuery, useMutation } from "@apollo/client";
 import { GET_POST, GET_POSTS } from "../graphql/Queries";
 import { ADD_COMMENT, UPDATE_POST } from "../graphql/Mutations";
+import swal from 'sweetalert';
 
 export default function EditPost(props) {
     const id = parseInt(props.match.params.id);
@@ -69,6 +67,29 @@ export default function EditPost(props) {
         }
     }
 
+    const handleCancel = () => {
+        if (state.title !== post.title
+            || state.content !== post.content
+            || imagePreviewUrl !== post.image)
+            {
+                swal({
+                    title: "Are you sure?",
+                    text: "Changes will not be applied.",
+                    icon: "warning",
+                    buttons: { 
+                        confirm: true, 
+                        cancel: true,
+                    }
+                  }).then((res) => {
+                      if (res) {
+                          history.push('/');
+                      }
+                  });
+            } else {
+                history.push('/');
+            }
+    }
+
     const handleImageChange = (e) => {
         e.preventDefault();
     
@@ -121,7 +142,7 @@ export default function EditPost(props) {
             </section>
             <section className="flex flex-row flex-end mt-63 px-123">
                 <span className="f-20 fw-bold ml-50 underline cursor-pointer" onClick={handleSavePost}>Save Post</span>
-                <Link to={`/`}><span className="f-20 fw-bold ml-50 underline">Cancel</span></Link>
+                <span className="f-20 fw-bold ml-50 underline" onClick={handleCancel}>Cancel</span>
             </section>
             <section className="mt-33 px-123">
                 <div className="flex flex-column news-info">

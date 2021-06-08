@@ -77,7 +77,6 @@ class PostAPI extends DataSource {
 
     if (result) {
       const comment = await this.store.comments.findByPk(result.id);
-
       return comment ? comment.dataValues : {};
     }
     else {

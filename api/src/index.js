@@ -13,20 +13,33 @@ const dataSources = () => ({
   userAPI: new UserAPI({ store })
 });
 
-const context = async ({ req }) => {
-  const token = (req.headers && req.headers.authorization) || '';
+const context = async ({ req, connection }) => {
+  if (connection) {
+    return connection.context;
+  } else {
+    const token = (req.headers && req.headers.authorization) || '';
 
-  const result = await store.users.findOne({ where: { token } });
-  const user = result ? result.dataValues : null;
+    const result = await store.users.findOne({ where: { token } });
+    const user = result ? result.dataValues : null;
 
-  return { user };
+    return { user };
+  }
 }
 
 const server = new ApolloServer({
   typeDefs,
   resolvers,
   dataSources,
-  context
+  context,
+  subscriptions: {
+    onConnect: (connectionParams, webSocket) => {
+      console.log('Websocket CONNECTED');
+      return {
+        headers: webSocket.upgradeReq.headers
+      } 
+    },
+    onDisconnect: () => console.log('Websocket CONNECTED'),
+  }
 });
 
 server.listen().then(({ url }) => {

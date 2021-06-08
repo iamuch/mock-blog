@@ -25,8 +25,9 @@ module.exports = {
       return dataSources.postAPI.update(post)
     },
     addComment: async (_, { postId, content }, { dataSources }) => {
-      pubsub.publish(COMMENT_ADDED, { commentAdded: content });
-      return dataSources.postAPI.addComment(postId, content);
+      const comment = dataSources.postAPI.addComment(postId, content);
+      pubsub.publish(COMMENT_ADDED, { commentAdded: comment});
+      return comment;
     },
     register: async (_, { email, password }, { dataSources }) => {
       return dataSources.userAPI.register(email, password);

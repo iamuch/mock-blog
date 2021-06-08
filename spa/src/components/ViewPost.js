@@ -3,13 +3,14 @@ import {
   } from "react-router-dom";
 
 import Comment from './Comment';
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Button from "./Button";
 import { useSelector } from "react-redux";
 import moment from 'moment';
-import { useMutation, useQuery } from "@apollo/client";
+import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import { GET_POST} from "../graphql/Queries";
 import { ADD_COMMENT } from "../graphql/Mutations";
+import { COMMENT_ADDED } from "../graphql/Subsription";
 
 export default function ViewPost(props) {
     const id = parseInt(props.match.params.id);
@@ -20,13 +21,15 @@ export default function ViewPost(props) {
     });
 
     const [addComment] = useMutation(ADD_COMMENT);
-
+    const {data: subs} = useSubscription(COMMENT_ADDED, {
+            variables: {postId: id}
+        });
     const {data} = useQuery(
         GET_POST,
-        { 
-            variables: {id: id},
-            fetchPolicy: "network-only"
+        {
+            variables: {id: id}
         });
+
 
     const handleChange = (e) => {
         setComment(e.target.value);
@@ -35,17 +38,23 @@ export default function ViewPost(props) {
     const handleSubmit = () => {
         if (comment !== "") {
             addComment({ variables: { postId: id, content: comment},
-                    refetchQueries: [{query: GET_POST, variables: { id: id}}]
+                    // refetchQueries: [{query: GET_POST, variables: { id: id}}]
                 })
                 .then(res => {
                     setState({comments: [...state.comments, res.data.addComment]})
                     setComment("");
                 })
                 .catch(e => {
-                    console.log(e);
+                    console.error(e);
                 })
         }
     }
+
+    useEffect(() => {
+        if(data) {
+            setState({comments: [...state.comments, data?.post.comments]});
+        }
+    }, [data])
 
     return (
         <div className="mt-100">
@@ -71,11 +80,12 @@ export default function ViewPost(props) {
             <section className="comment px-123 ">
                 <div className="mt-60 mb-39 "><span className="f-50 fw-bold">COMMENT</span></div>
                 <div className="flex flex-column">
-                    {data?.post.comments.slice().sort(function(a, b) { 
+                    {state.comments.slice().sort(function(a, b) { 
                             return a.id - b.id;
                         }).map((cm, i) => {
                         return <Comment key={i} comment={cm}/>
                     })}
+                    {console.log(state.comments)}
                 </div>
                 <textarea className="h-200 w-100p p-40 fs-italic" id="comment" value={comment} onChange={handleChange} placeholder="Write comment"/>
                 <div className="mt-40 mb-148 flex flex-row flex-end"><Button width="210px" label="SUBMIT" onClick={handleSubmit} /></div>

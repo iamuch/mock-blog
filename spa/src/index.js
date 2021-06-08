@@ -3,34 +3,56 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import App from './components/App';
 import reportWebVitals from './reportWebVitals';
-
 import { BrowserRouter } from 'react-router-dom'
-
 import { createStore } from 'redux';
 import { Provider } from 'react-redux';
-
 import { AUTH_SIGNIN } from './constants';
 import reducer from './reducers';
-
 import { ApolloClient, ApolloProvider, createHttpLink, InMemoryCache } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
+import { split } from '@apollo/client';
+import { WebSocketLink } from '@apollo/client/link/ws';
+import { getMainDefinition } from '@apollo/client/utilities';
+import { SubscriptionClient } from 'subscriptions-transport-ws';
+
+const GRAPHQL_ENDPOINT = "localhost:4000/graphql";
+const token = localStorage.getItem('token');
 
 const httpLink = createHttpLink({
-  uri: 'http://localhost:4000/graphql',
+  uri: `http://${GRAPHQL_ENDPOINT}`,
+});
+
+const wsLink = new WebSocketLink({
+  uri: `ws://${GRAPHQL_ENDPOINT}`,
+  options: {
+    reconnect: true,
+  },
 });
 
 const authLink = setContext((_, { headers }) => {
-  const token = localStorage.getItem('token');
   return {
     headers: {
       ...headers,
-      Authorization: token,
+      authorization: `${token}`,
     }
   }
 });
 
+const splitLink = split(
+  ({ query }) => {
+    const definition = getMainDefinition(query);
+    return (
+      definition.kind === 'OperationDefinition' &&
+      definition.operation === 'subscription'
+    );
+  },
+  wsLink,
+  authLink.concat(httpLink),
+);
+
+
 const client = new ApolloClient({
-  link: authLink.concat(httpLink),
+  link: splitLink,
   cache: new InMemoryCache()
 });
 
@@ -39,7 +61,6 @@ const store = createStore(
   window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__() 
 );
 
-const token = localStorage.getItem('token');
 if (token) {
   store.dispatch({ type: AUTH_SIGNIN });
 }
